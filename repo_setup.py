@@ -1,7 +1,5 @@
 import urllib.request
-import wave
-print(urllib)
-print(wave)
+
 
 files = {
     'sine1.wav': "https://www3.nd.edu/~dthain/courses/cse20211/fall2013/wavfile/sine.wav",

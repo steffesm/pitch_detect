@@ -1,6 +1,7 @@
 import wave
 import numpy
 
+
 # Read file to get buffer
 ifile = wave.open("440.wav")
 samples = ifile.getnframes()
