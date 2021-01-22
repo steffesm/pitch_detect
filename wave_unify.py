@@ -1,3 +1,5 @@
+#  Copyright (c) 2021
+
 from enum import IntEnum, unique
 
 import numpy as np
