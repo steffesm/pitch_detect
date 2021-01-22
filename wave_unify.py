@@ -5,9 +5,8 @@ from matplotlib import pyplot as plt
 import string
 import scipy.io.wavfile as wavfile
 
-"""
-"""
-class FreqMeasure:
+
+class WaveUnifyData:
     _MIN_PER = 5
     _MIN_FREQ = 20  # Hz
 
@@ -163,6 +162,64 @@ class FreqMeasure:
 
     # endregion
 
+    # region frequency
+    @property
+    def samples_mono(self) -> np.ndarray:
+        """return mono signal from wave
+
+        multiple channels are averaged
+        """
+        dat = self.dat_slice()
+        if self.mono:
+            # already mono
+            return dat
+        # convert stereo to mono: average
+        dat_sum = np.sum(dat, 1)
+        dat_ret = dat_sum / dat.shape[1]
+        return dat_ret[self.start:self.end]
+
+    def _get_channels(self, channels) -> dict:
+        ch_max = self.channels - 1
+        ch_dict = {}
+        dat = self.dat_slice()
+        for i, ch in enumerate(channels):
+            sig = None
+            if ch <= ch_max:
+                sig = dat[:, ch]
+                ch_dict.update({ch: sig})
+        return ch_dict
+
+    def _sum_channels(self, channel_sets) -> list:
+        sig_set = []
+        for ch_set in (channel_sets):
+            sig_dict = self._get_channels(ch_set)
+            sig_list = list(sig_dict.values())
+            sig_sum = np.sum(sig_list, 0)
+            sig_set.append(sig_sum)
+        return sig_set
+
+    @property
+    def stereo_diff(self) -> np.ndarray:
+        """provide difference of left and right channels"""
+        if self.mono:
+            raise TypeError("object does not support stereo-signals")
+        channel_sets = (self.CHANNELS_LEFT, self.CHANNELS_RIGHT)
+        sig_set = self._sum_channels(channel_sets)
+        sig_res = sig_set[1] - sig_set[0]
+        return sig_res
+
+    @property
+    def stereo_sum(self) -> np.ndarray:
+        """provide sum of left and right channels"""
+        if self.mono:
+            raise TypeError("object does not support stereo-signals")
+        channel_sets = (self.CHANNELS_LEFT, self.CHANNELS_RIGHT)
+        sig_set = self._sum_channels(channel_sets)
+        sig_res = (sig_set[1] + sig_set[0]) / 2
+        return sig_res
+
+    # endregion
+
     # region plots
     def plot_mono(self, **kwargs):
         sig_mono = self.samples_mono
@@ -208,7 +265,7 @@ if __name__ == "__main__":
     file1 = "440.wav"
     file2 = "Kammerton.wav"
 
-    fm1 = FreqMeasure(file2)
+    fm1 = WaveUnifyData(file2)
     signals = [
         fm1.stereo_diff,
         fm1.stereo_sum,
