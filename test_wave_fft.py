@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from wave_unify import WaveUnifyData
+from freq_detect import FreqDetect
 
 plot_show = True
 plot_length = 1000
@@ -81,17 +82,10 @@ def test_plot_signals(wav_files):
 
 def test_plot_fft(wav_files):
     for filename in wav_files:
-        fmi = WaveUnifyData(filename)
-        fmi.end = plot_length
-        if fmi.mono:
-            fmi.plot_mono(normalize=False)
-        else:
-            signals = [
-                fmi.stereo_diff,
-                fmi.stereo_sum,
-                np.diff(signals[1]),
-            ]
-            fmi.plot_signals(signals, normalize=True)
+        wave_i = WaveUnifyData(filename)
+        fd1 = FreqDetect(wave_i.samples_mono, wave_i.sample_rate)
+        fft_i = fd1.fft()
+        fd1.plot_fft(fft_i, title="FFT "+filename)
     plot_show()
 
 # endregion
