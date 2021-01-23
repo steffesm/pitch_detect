@@ -65,7 +65,7 @@ class WaveUnifyData:
 
     def __init__(self,
                  filename: string,
-    ):
+                 ):
         # self._filename = filename
         self._wav = wavfile.read(filename)
         self._smpl_rate = self._wav[0]
@@ -104,6 +104,15 @@ class WaveUnifyData:
         if start == 0 and end == -1:
             return self._dat  # avoid array operations
         return self._dat[start:end]
+
+    def time_slice(self, start=None, end=None):
+        start = self.start if start is None else start
+        end = self.end if end is None else end
+        time_range = range(0, end-start) / self._smpl_rate
+        if start == 0 and end == -1:
+            return self._dat  # avoid array operations
+        return self._dat[start:end]
+
     # endregion
 
     # region access to wave-file data
