@@ -41,11 +41,18 @@ def create_wav_files():
 
 def get_waves():
     files = create_wav_files()
-    waves_dict = {}
+    wave_dict = {}
     for file in files:
         wavdat = WaveUnifyData(file)
-        waves_dict.update({file: wavdat})
-    return waves_dict
+        wave_dict.update({file: wavdat})
+    return wave_dict
+
+def get_freqs():
+    freq_dict ={}
+    for name, wave in get_waves().items():
+        freq_det = FreqDetect(wave.sample_rate, wave.samples_mono)
+        freq_dict.update({name: freq_det})
+    return freq_dict
 
 # endregion
 
@@ -104,6 +111,10 @@ file1 = files_list[0]
 waves_dict = get_waves()
 waves_list = list(waves_dict.values())
 wave1 = waves_list[0]
+
+freqs_dict = get_freqs()
+freqs_list = list(freqs_dict.values())
+freq1 = freqs_list[0]
 
 # endregion
 
