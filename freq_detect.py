@@ -76,10 +76,12 @@ class FreqDetect:
             freqs_x = fft.freq
             sig_in = fft.sig
             sig_norm = sig_in
-            if normalize:
+            sig_norm = sig_in
+            sig_max = normalize
+            if normalize < 2:  # normalize=True -> normalize to signal max
                 sig_max = np.max(np.abs(sig_in))
-                if sig_max != 0:
-                    sig_norm = sig_in.astype('float64') / sig_max
+            if sig_max != 0:
+                sig_norm = sig_in.astype('float64') / sig_max
             sig = sig_norm
             ax = plots[i]
             ax.step(freqs_x, sig)

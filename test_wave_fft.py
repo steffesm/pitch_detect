@@ -9,13 +9,14 @@ from matplotlib import pyplot as plt
 from wave_unify import WaveUnifyData
 from freq_detect import FreqDetect
 
-plot_show = True
-plot_length = 1000
+show_plots = False
+normalize_plots = True
+plot_length = 5000
 
 # region helper functions
 
 def plot_show():
-    if plot_show:
+    if show_plots:
         plt.show()
 
 def create_wav_files():
@@ -64,15 +65,16 @@ def test_plot_signals(wav_files):
         fmi.end = plot_length
         plot_args = {
             'title': "Signal " + filename,
-            'normalize': True,
+            'normalize': normalize_plots,
         }
         if fmi.mono:
             fmi.plot_mono(**plot_args)
         else:
+            stereo_sum = fmi.stereo_sum
             signals = [
                 fmi.stereo_diff,
-                fmi.stereo_sum,
-                np.diff(signals[1]),
+                stereo_sum,
+                np.diff(stereo_sum),
             ]
             fmi.plot_signals(
                 signals,
@@ -85,7 +87,11 @@ def test_plot_fft(wav_files):
         wave_i = WaveUnifyData(filename)
         fd1 = FreqDetect(wave_i.samples_mono, wave_i.sample_rate)
         fft_i = fd1.fft()
-        fd1.plot_fft(fft_i, title="FFT "+filename)
+        fd1.plot_fft(
+            fft_i,
+            title="FFT "+filename,
+            normalize=normalize_plots,
+        )
     plot_show()
 
 # endregion
@@ -104,4 +110,8 @@ wave1 = waves_list[0]
 # region main
 
 if __name__ == '__main__':
+    show_plots = True
+    normalize_plots = 2 ** 15
+    plot_length = 5000
+
     pytest.main()
