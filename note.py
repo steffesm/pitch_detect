@@ -48,34 +48,12 @@ class Interval(IntEnum):
 class Note:
     """musical representation of frequency"""
 
+    _OCTAVE_NOTES = 12  # semitones in an octave
+
     # region reference note
     _PITCH_REFERENCE = 440  # Hz
-    _NOTE_REFERENCE = 4 * 12 + 9  # Note 9 (A) in octave 4
-
-    def __init__(self, freq):
-        self.freq = freq
-
-
-    def __repr__(self):
-        octave, note = np.divmod(self.note, 12)  # integer octave and note
-        note_int, error = np.divmod(note, 1)  # integer note-name and error
-        add = error > 0.5
-        note_int = note_int + 1 * add
-        error = error - 1 * add
-
-        note_name = NoteName(note_int)
-        note_str = str(note_name).split('.')[-1]  # remove 'NoteName'
-
-        error_cent = int(round(error * 100))
-        err_str = ""
-        if error_cent:
-            err_str = " %+d cent" % error_cent
-        res = (note_str
-               + str(int(octave))
-               + err_str
-               + " %f3 Hz" % self.freq
-        )
-        return res
+    _NOTE_REFERENCE = 5 * 12 + 9  # Note 9 (A) in octave 5 (Midi Note Number)
+    _OCTAVE_OFFSET = 1  # Offset of naming convention to numeric notation
 
     @classmethod
     def _freq_note_0(cls):
@@ -85,38 +63,67 @@ class Note:
 
     # endregion
 
+    def __init__(self, freq):
+        self.freq = freq  # frequency in Hz
+        self.num = self._get_note(freq)  # numerical note as Midi Note Number
+
+    def __repr__(self):
+        note_error = self.num - round(self.num)
+        error_cent = int(round(note_error * 100))
+        err_str = ""
+        if error_cent:
+            err_str = " %+d cent" % error_cent
+        res = (self.name
+               + err_str
+               + " %.3f Hz" % self.freq
+        )
+        return res
+
     # alternative constructor
     @classmethod
     def create(cls, note, octave=None):
         """create object from musical representation"""
-        octave = 0 if octave is None else octave
-        octave = 0 if note > 12 else octave
-        note += 12 * octave  # apply octave
-        rel = cls._get_relation(note)
-        freq = cls._freq_note_0() / rel
-        return cls()
+        octave = octave or 0
+        note_num = note + cls._OCTAVE_NOTES * octave
+        freq = cls._get_freq(note_num)
+        return cls(freq)
 
     # region properties
 
     @property
-    def note(self):
-        """returns note in numerical form"""
-        freq_base = self._freq_note_0()
-        rel = self.freq / freq_base
-        note = self._get_interval(rel)
-        return note + 12  # include octave -1 in positive range
+    def octave(self) -> float:
+        """returns octave in numerical form"""
+        return self.num / 12
 
     @property
     def name(self):
         """return name of note"""
-        octave, note = divmod(self.note, 12)
-        name = NoteName(note)
-        return name
-
+        octave, note = divmod(self.num, self._OCTAVE_NOTES)
+        octave -= self._OCTAVE_OFFSET
+        note_enum = NoteName(round(note))
+        note_str = str(note_enum).split('.')[-1]  # remove 'NoteName'
+        note_name = note_str + str(int(octave))
+        return note_name
 
     # endregion
 
     # region internal calculations
+    @classmethod
+    def _get_note(cls, frequency):
+        # get numerical note from frequency
+        freq_base = cls._freq_note_0()
+        rel = frequency / freq_base
+        note_interval = cls._get_interval(rel)
+        return note_interval
+
+    @classmethod
+    def _get_freq(cls, note):
+        # get frequency from numerical note
+        rel = cls._get_relation(note)
+        root = cls._freq_note_0()
+        freq = root * rel
+        return freq
+
 
     @staticmethod
     def _get_interval(relation):
@@ -127,53 +134,11 @@ class Note:
     @staticmethod
     def _get_relation(interval):
         octaves = interval / 12
-        rel = 2 ** octaves
+        rel = 2**octaves
         return rel
 
     # endregion
 
-    # @property
-    # def error
-
-
-    # def _get_note_num(self, freq_sig):
-    #     rel = freq_sig / self.freq_note_0
-    #     note = self._get_freq_interval(rel)
-    #     return note
-
-    # def get_note_error(self, freq_sig):
-    #     """return note for a frequency and difference in cent"""
-    #     note_float = self._get_note_num(freq_sig)
-    #     note_int = round(note_float)
-    #     note_name = self.Note(note_int)
-    #     note_err_log = note_float - note_int
-    #     note_err_cent = note_err_log * 12
-    #
-    #     # octaves = int(rel_log)
-    #     # return note_name, error
-    #
-    # def _get_freq_interval(self, freq_note, freq_root):
-    #     rel = freq_note / freq_root
-    #     rel_log = np.log2(rel)
-    #     interval = rel_log * 12 + 1
-    #     return interval
-    #
-    # def _get_interval_relation(self, interval):
-    #     octaves = interval / 12
-    #     rel = 2**octaves
-    #     return rel
-
 
 if __name__ == "__main__":
-    print(Note(440))
-    print(Note(8.175799 + 0.01))
-    print(Note(200))
-    print(Note(27.2))
-
-    # freqs = np.array((
-    #     440,
-    #     8.175799 + 0.01,
-    #     200,
-    #     27.2,
-    # ))
-    # print(Note(freqs))
+    pass
