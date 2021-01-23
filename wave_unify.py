@@ -188,12 +188,14 @@ class WaveUnifyData:
 
     def plot_signals(self,
                      signals,
+                     title=None,
                      normalize: bool = None):
         try:
             signals[0][0]
         except IndexError:
             signals = (signals, )
-        fig1, plots = plt.subplots(len(signals), 1, sharex=True)
+        fig1 = plt.figure(title)
+        plots = fig1.subplots(len(signals), 1, sharex=True)
         if len(signals) == 1:
             plots = (plots, )
         for i, sig_in in enumerate(signals):
@@ -214,16 +216,18 @@ class WaveUnifyData:
 
     # regionblub tbd
 
+
 if __name__ == "__main__":
     file1 = "440.wav"
     file2 = "Kammerton.wav"
 
     fm1 = WaveUnifyData(file2)
+    stereo_sum = fm1.stereo_sum
     signals = [
         fm1.stereo_diff,
-        fm1.stereo_sum,
+        stereo_sum,
+        np.diff(stereo_sum)
     ]
-    signals.append(np.diff(signals[1]))
     # fm1.plot_mono()
     fm1.plot_signals(signals, normalize=True)
     plt.show()
