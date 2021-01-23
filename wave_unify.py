@@ -9,8 +9,6 @@ import scipy.io.wavfile as wavfile
 
 
 class WaveUnifyData:
-    _MIN_PER = 5
-    _MIN_FREQ = 20  # Hz
 
     # region channels for stereo, surround sound
     @unique
@@ -72,8 +70,6 @@ class WaveUnifyData:
         self._wav = wavfile.read(filename)
         self._smpl_rate = self._wav[0]
         self._dat = self._wav[1]
-        # self._index_start = 0
-        # self._index_end = -1
         self.start = 0
         self.end = -1
 
@@ -86,6 +82,10 @@ class WaveUnifyData:
     # @property
     # def end(self):
     #     return self._index_end
+
+    @property
+    def sample_rate(self):
+        return self._smpl_rate
 
     @property
     def mono(self) -> bool:
@@ -107,64 +107,6 @@ class WaveUnifyData:
     # endregion
 
     # region access to wave-file data
-    @property
-    def samples_mono(self) -> np.ndarray:
-        """return mono signal from wave
-
-        multiple channels are averaged
-        """
-        dat = self.dat_slice()
-        if self.mono:
-            # already mono
-            return dat
-        # convert stereo to mono: average
-        dat_sum = np.sum(dat, 1)
-        dat_ret = dat_sum / dat.shape[1]
-        return dat_ret[self.start:self.end]
-
-    def _get_channels(self, channels) -> dict:
-        ch_max = self.channels - 1
-        ch_dict = {}
-        dat = self.dat_slice()
-        for i, ch in enumerate(channels):
-            sig = None
-            if ch <= ch_max:
-                sig = dat[:, ch]
-                ch_dict.update({ch: sig})
-        return ch_dict
-
-    def _sum_channels(self, channel_sets) -> list:
-        sig_set = []
-        for ch_set in (channel_sets):
-            sig_dict = self._get_channels(ch_set)
-            sig_list = list(sig_dict.values())
-            sig_sum = np.sum(sig_list, 0)
-            sig_set.append(sig_sum)
-        return sig_set
-
-    @property
-    def stereo_diff(self) -> np.ndarray:
-        """provide difference of left and right channels"""
-        if self.mono:
-            raise TypeError("object does not support stereo-signals")
-        channel_sets = (self.CHANNELS_LEFT, self.CHANNELS_RIGHT)
-        sig_set = self._sum_channels(channel_sets)
-        sig_res = sig_set[1] - sig_set[0]
-        return sig_res
-
-    @property
-    def stereo_sum(self) -> np.ndarray:
-        """provide sum of left and right channels"""
-        if self.mono:
-            raise TypeError("object does not support stereo-signals")
-        channel_sets = (self.CHANNELS_LEFT, self.CHANNELS_RIGHT)
-        sig_set = self._sum_channels(channel_sets)
-        sig_res = (sig_set[1] + sig_set[0]) / 2
-        return sig_res
-
-    # endregion
-
-    # region frequency
     @property
     def samples_mono(self) -> np.ndarray:
         """return mono signal from wave
@@ -252,7 +194,7 @@ class WaveUnifyData:
                 if sig_max != 0:
                     sig_norm = sig_in.astype('float64') / sig_max
             sig = sig_norm
-            sig_rng = range(0, len(sig))
+            sig_rng = np.arange(0, len(sig)) / self._smpl_rate
             ax = plots[i]
             ax.step(sig_rng, sig)
             ax.grid()
